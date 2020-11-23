@@ -22,17 +22,21 @@ module.exports = (req, res, next) => {
     .then((decodedToken) => {
       req.user = decodedToken;
       console.log("[DECOEDED TOKEN: ]", decodedToken);
-      return db
-        .doc(`/users/${req.user.uid}`)
+      db.collection("users")
+        .where("uid", "==", req.user.uid)
+        .limit(1)
         .get()
         .then((doc) => {
-          if (doc.exists) {
+          if (!doc.empty) {
             return next();
           } else {
             const newUser = {
               uid: req.user.uid,
+              email: req.user.email,
             };
-            return db.doc(`/users/${req.user.uid}`).set(newUser);
+            // db.collection("users").add(newUser);
+            db.doc(`/users/${req.user.uid}`).set(newUser);
+            return next();
           }
         })
         .catch((err) => {
@@ -40,11 +44,11 @@ module.exports = (req, res, next) => {
           return res.status(403).json(err);
         });
     })
-    .then((data) => {
-      console.log("[THIS IS DATA]", data);
-      //   req.user.uid = data.docs[0].data().uid;
-      return next();
-    })
+    // .then((data) => {
+    //   console.log("[THIS IS DATA]", data);
+    //   // req.user.uid = data.docs[0].data().uid;
+    //   return next();
+    // })
     .catch((err) => {
       console.error("Error while verifying token", err);
       return res.status(403).json(err);

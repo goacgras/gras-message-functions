@@ -5,8 +5,9 @@ const cors = require("cors");
 const FBAuth = require("./util/fbAuth");
 app.use(cors());
 
-const { getContacts } = require("./handlers/room");
+const { addContact, getContact } = require("./handlers/contact");
 
-app.get("/contacts", FBAuth, getContacts);
+app.get("/contacts", FBAuth, getContact);
+app.post("/contacts", FBAuth, addContact);
 
 exports.api = functions.region("asia-southeast2").https.onRequest(app);
