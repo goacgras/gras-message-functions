@@ -1,4 +1,4 @@
-const { json } = require("body-parser");
+// const { json } = require("body-parser");
 const { db, admin } = require("../util/admin");
 
 const { validateEmail } = require("../util/validates");
@@ -9,6 +9,7 @@ exports.getContact = (req, res) => {
     .collection("contacts")
     .where("uid", "==", req.user.uid);
 
+  //firstimer create contact data
   contactsDoc
     .get()
     .then((doc) => {
@@ -21,18 +22,17 @@ exports.getContact = (req, res) => {
         return res.json({ message: "new user added to contacts" });
       } else {
         // return res.json(doc.docs[0].data());
+        //check if user has contacts data
         db.collection("contacts")
           .doc(req.user.uid)
           .collection("userContacts")
           .orderBy("createdAt", "desc")
-          .get()
-          .then((userContacts) => {
-            if (userContacts.empty) {
+          .onSnapshot((snapshot) => {
+            if (snapshot.empty) {
               return res.json({ message: "you have no contacts" });
             } else {
-              // return res.json(userContacts.docs[0].data());
               let contacts = [];
-              userContacts.forEach((contact) => {
+              snapshot.forEach((contact) => {
                 contacts.push({
                   contactId: contact.id,
                   email: contact.data().email,
@@ -41,6 +41,24 @@ exports.getContact = (req, res) => {
               return res.json(contacts);
             }
           });
+        // .get()
+        // .then((userContacts) => {
+        //   if (userContacts.empty) {
+        //     //no contacts
+        //     return res.json({ message: "you have no contacts" });
+        //   } else {
+        //     // return res.json(userContacts.docs[0].data());
+        //     //getting contacts
+        //     let contacts = [];
+        //     userContacts.forEach((contact) => {
+        //       contacts.push({
+        //         contactId: contact.id,
+        //         email: contact.data().email,
+        //       });
+        //     });
+        //     return res.json(contacts);
+        //   }
+        // })
       }
     })
     .catch((err) => {
@@ -91,6 +109,7 @@ exports.addContact = (req, res) => {
                 )
                   .set(newContactData)
                   .then(() => {
+                    //TODO neeed to return to rooms collection and create room
                     return res.status(201).json({
                       message: newContactData.email + " successfully added",
                     });
@@ -100,6 +119,10 @@ exports.addContact = (req, res) => {
                     res.status(500).json({ error: "something went wrong" });
                   });
               }
+            })
+            .catch((err) => {
+              console.error(err);
+              res.status(500).json({ error: "something went wrong" });
             });
         }
       }
